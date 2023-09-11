@@ -1,6 +1,7 @@
 ﻿namespace matrixMultiplication;
 
 using System.IO;
+using System.Security.Cryptography;
 
 public class Matrix
 {
@@ -60,7 +61,36 @@ public class Matrix
         return new Matrix(result);
     }
 
-    public static Matrix MultiplyInParallel(Matrix leftMatrix, Matrix secondMatrix) { return null; }
-
+    public static Matrix MultiplyInParallel(Matrix leftMatrix, Matrix rightMatrix)
+    {
+        if (leftMatrix.Columns != rightMatrix.Rows)
+        {
+            throw new ArgumentException();
+        }
+        var result = new int[leftMatrix.Rows, rightMatrix.Columns];
+        var threads = new Thread[leftMatrix.Columns];
+        for (int i = 0; i < leftMatrix.Rows; i++)
+        {
+            var row = i;
+            threads[i] = new Thread(() =>
+            {
+                for (int j = 0; j < rightMatrix.Columns; j++)
+                {
+                    var sum = 0;
+                    for (int k = 0; k < leftMatrix.Columns; k++)
+                    {
+                        sum += leftMatrix.Elements[row, k] * rightMatrix.Elements[k, j];
+                    }
+                    result[row, j] = sum;
+                }
+            });
+            threads[i].Start();
+        }
+        for (int i = 0; i < result.GetLength(0); i++)
+        {
+            threads[i].Join();
+        }
+        return new Matrix(result);
+    }
 
 }
