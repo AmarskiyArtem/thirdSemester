@@ -5,8 +5,8 @@ namespace matrixMultiplication;
 
 public class Matrix
 {
-
     public int Rows { get; }
+
     public int Columns { get; }
 
     public int[,] Elements { get; }
@@ -15,7 +15,7 @@ public class Matrix
     {
         if (!File.Exists(path))
         {
-            throw new FileNotFoundException();
+            throw new FileNotFoundException(path);
         }
         var matrix = new List<int[]>();
         using (var reader = new StreamReader(path))
@@ -24,7 +24,7 @@ public class Matrix
             {
                 if (!IsCorrectMatrixLine(line))
                 {
-                    throw new FormatException();
+                    throw new FormatException("The file can only contain numbers");
                 }
                 var numbers = new Regex(@"-?\d+").Matches(line).
                     Select(match => int.Parse(match.Value)).ToArray();
@@ -33,13 +33,13 @@ public class Matrix
         }
         if (matrix.Count == 0)
         {
-            throw new ArgumentException();
+            throw new ArgumentException("File is empty");
         }
         for (var i = 1; i < matrix.Count; i++)
         {
             if (matrix[i].Length != matrix[i - 1].Length)
             {
-                throw new ArgumentException();
+                throw new ArgumentException("the file must contain a matrix");
             }
         }
         Rows = matrix.Count;
@@ -65,12 +65,12 @@ public class Matrix
     private bool IsCorrectMatrixLine(string line) 
         => Regex.IsMatch(line, @"^(-?\d+ ?)+");
 
-
     public static Matrix Multiply(Matrix leftMatrix, Matrix rightMatrix)
     {
         if (leftMatrix.Columns  != rightMatrix.Rows)
         {
-            throw new ArgumentException();
+            throw new ArgumentException("The number of columns of the left matrix " +
+                "should be equal to the number of rows of the right matrix");
         }
         var result = new int[leftMatrix.Rows, rightMatrix.Columns];
         for (int i = 0; i < leftMatrix.Rows; i++)
@@ -90,7 +90,8 @@ public class Matrix
     {
         if (leftMatrix.Columns != rightMatrix.Rows)
         {
-            throw new ArgumentException();
+            throw new ArgumentException("The number of columns of the left matrix " +
+                "should be equal to the number of rows of the right matrix");
         }
         var result = new int[leftMatrix.Rows, rightMatrix.Columns];
         var threads = new Thread[leftMatrix.Columns];
@@ -120,10 +121,6 @@ public class Matrix
 
     public void WriteToFile(string path)
     {
-        //if (!File.Exists(path))
-        //{
-          //  throw new FileNotFoundException(path);
-        //}
         using (var writer = new StreamWriter(path))
         {
             for (var i = 0; i < Rows; i++)
