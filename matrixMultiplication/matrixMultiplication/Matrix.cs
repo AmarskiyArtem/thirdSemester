@@ -118,4 +118,22 @@ public class Matrix
         return new Matrix(result);
     }
 
+    public void WriteToFile(string path)
+    {
+        //if (!File.Exists(path))
+        //{
+          //  throw new FileNotFoundException(path);
+        //}
+        using (var writer = new StreamWriter(path))
+        {
+            for (var i = 0; i < Rows; i++)
+            {
+                for (var j = 0; j < Columns; j++)
+                {
+                    writer.Write($"{Elements[i, j]} ");
+                }
+                writer.Write('\n');
+            }
+        }
+    }
 }
