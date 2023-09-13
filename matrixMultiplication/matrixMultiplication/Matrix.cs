@@ -1,27 +1,51 @@
-﻿namespace matrixMultiplication;
+﻿using System.Text.RegularExpressions;
 
-using System.IO;
-using System.Security.Cryptography;
+namespace matrixMultiplication;
+
 
 public class Matrix
 {
 
-    public int Rows { get; private set; }
-    public int Columns { get; private set; }
+    public int Rows { get; }
+    public int Columns { get; }
 
-    public int[,] Elements { get; private set; }
+    public int[,] Elements { get; }
 
     public Matrix(String path)
     {
-        try
+        var matrix = new List<int[]>();
+        using (var reader = new StreamReader(path))
         {
-            var lines = File.ReadAllLines(path);
+            
+            while (reader.ReadLine() is string line)
+            {
+                var numbers = new Regex(@"-?\d+").Matches(line).
+                    Select(match => int.Parse(match.Value)).ToArray();
+                matrix.Add(numbers);
+            }
         }
-        catch (Exception e)
+        if (matrix.Count == 0)
         {
-            Console.WriteLine(e);
-            throw;
+            throw new ArgumentException();
         }
+        for (var i = 1; i < matrix.Count; i++)
+        {
+            if (matrix[i].Length != matrix[i - 1].Length)
+            {
+                throw new ArgumentException();
+            }
+        }
+        Rows = matrix.Count;
+        Columns = matrix[0].Length;
+        var newElements = new int[Rows, Columns];
+        for (int i = 0; i < Rows; i++)
+        {
+            for (int j = 0; j < Columns; j++)
+            {
+                newElements[i, j] = matrix[i][j];
+            }
+        }
+        Elements = newElements;
     }
 
     public Matrix(int[,] array)
