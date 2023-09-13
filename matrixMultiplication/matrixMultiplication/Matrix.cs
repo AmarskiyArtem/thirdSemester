@@ -13,12 +13,19 @@ public class Matrix
 
     public Matrix(String path)
     {
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException();
+        }
         var matrix = new List<int[]>();
         using (var reader = new StreamReader(path))
         {
-            
             while (reader.ReadLine() is string line)
             {
+                if (!IsCorrectMatrixLine(line))
+                {
+                    throw new FormatException();
+                }
                 var numbers = new Regex(@"-?\d+").Matches(line).
                     Select(match => int.Parse(match.Value)).ToArray();
                 matrix.Add(numbers);
@@ -55,15 +62,9 @@ public class Matrix
         Elements = (int[,])array.Clone();
     }
 
-    private int ScalarProduct(int[] row, int[] column)
-    {
-        var result = 0;
-        for (int i = 0; i < row.Length; ++i)
-        {
-            result += row[i] * column[i];
-        }
-        return result;
-    }
+    private bool IsCorrectMatrixLine(string line) 
+        => Regex.IsMatch(line, @"^(-?\d+ ?)+");
+
 
     public static Matrix Multiply(Matrix leftMatrix, Matrix rightMatrix)
     {
