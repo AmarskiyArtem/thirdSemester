@@ -20,7 +20,7 @@ public class Matrix
         var matrix = new List<int[]>();
         using (var reader = new StreamReader(path))
         {
-            while (reader.ReadLine() is string line)
+            while (reader.ReadLine() is { } line)
             {
                 if (!IsCorrectMatrixLine(line))
                 {
@@ -121,16 +121,53 @@ public class Matrix
 
     public void WriteToFile(string path)
     {
-        using (var writer = new StreamWriter(path))
+        using var writer = new StreamWriter(path);
+        for (var i = 0; i < Rows; i++)
         {
-            for (var i = 0; i < Rows; i++)
+            for (var j = 0; j < Columns; j++)
             {
-                for (var j = 0; j < Columns; j++)
-                {
-                    writer.Write($"{Elements[i, j]} ");
-                }
-                writer.Write('\n');
+                writer.Write($"{Elements[i, j]} ");
             }
+            writer.Write('\n');
         }
     }
+
+    public static bool operator ==(Matrix left, Matrix right)
+    {
+        if (left.Columns != right.Columns || left.Rows != right.Rows)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < left.Rows; ++i)
+        {
+            for (var j = 0; j < left.Columns; ++j)
+            {
+                if (left.Elements[i, j] != right.Elements[i, j])
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public static bool operator !=(Matrix left, Matrix right)
+    {
+        return !(left == right);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if ((obj == null) || GetType() != obj.GetType())
+        {
+            return false;
+        }
+
+        return (Matrix)obj == this;
+    }
+
+    public override int GetHashCode() =>
+        base.GetHashCode();
 }
