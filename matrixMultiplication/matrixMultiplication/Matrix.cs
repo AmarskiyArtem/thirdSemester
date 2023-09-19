@@ -5,9 +5,11 @@ namespace matrixMultiplication;
 
 public class Matrix
 {
-    public int Rows { get; }
+    public int Rows => 
+        Elements.GetLength(0);
 
-    public int Columns { get; }
+    public int Columns => 
+        Elements.GetLength(1);
 
     public int[,] Elements { get; }
 
@@ -42,9 +44,7 @@ public class Matrix
                 throw new ArgumentException("the file must contain a matrix");
             }
         }
-        Rows = matrix.Count;
-        Columns = matrix[0].Length;
-        var newElements = new int[Rows, Columns];
+        var newElements = new int[matrix.Count, matrix[0].Length];
         for (int i = 0; i < Rows; i++)
         {
             for (int j = 0; j < Columns; j++)
@@ -57,8 +57,6 @@ public class Matrix
 
     public Matrix(int[,] array)
     {
-        Rows = array.GetLength(0);
-        Columns = array.GetLength(1);
         Elements = (int[,])array.Clone();
     }
 
