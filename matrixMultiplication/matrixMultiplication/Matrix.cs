@@ -1,6 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿namespace MatrixMultiplication;
 
-namespace matrixMultiplication;
+using System.Text.RegularExpressions;
 
 
 public class Matrix
@@ -15,10 +15,6 @@ public class Matrix
 
     public Matrix(String path)
     {
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException(path);
-        }
         var matrix = new List<int[]>();
         using (var reader = new StreamReader(path))
         {
