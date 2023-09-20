@@ -63,6 +63,8 @@ public class Measurements
     
     private double GetMathExpectation(long[] results) =>
         results.Sum(t => t * 1d / results.GetLength(0));
+    
+    
 
     private double GetStandardDeviation(long[] results)
     {
