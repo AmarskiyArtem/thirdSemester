@@ -56,8 +56,8 @@ public class Matrix
         Elements = (int[,])array.Clone();
     }
 
-    private bool IsCorrectMatrixLine(string line) 
-        => Regex.IsMatch(line, @"^(-?\d+ ?)+");
+    private bool IsCorrectMatrixLine(string line)
+        => Regex.IsMatch(line, @"^(-?\d+ ?)+$");
 
     public static Matrix Multiply(Matrix leftMatrix, Matrix rightMatrix)
     {

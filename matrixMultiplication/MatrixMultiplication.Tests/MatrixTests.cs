@@ -45,17 +45,30 @@ public class MatrixTests
     }
 
     [Test]
-    public void ReadFromNotExistingFileShouldException()
-    {
+    public void ReadFromNotExistingFileShouldException() =>
         Assert.Throws<FileNotFoundException>(() => new Matrix(@"NotExisting.txt"));
-    }
+    
 
     [Test]
-    public void IncorrectMatrixShouldException()
-    {
+    public void IncorrectMatrixShouldException() =>
         Assert.Throws<ArgumentException>(() => new Matrix(@"../../../IncorrectMatrix.txt"));
+    
+
+    [Test]
+    public void EmptyFileShouldException() =>
+        Assert.Throws<ArgumentException>(() => new Matrix(@"../../../EmptyFile.txt"));
+    
+
+    [Test]
+    public void ExtraSymbolsShouldException() =>
+        Assert.Throws<FormatException>(() => new Matrix(@"../../../ExtraSymbolsMatrix.txt"));
+
+    [Test]
+    public void WrongDimensionsShouldException()
+    {
+        var left = new Matrix(new[,] { { 1, 5, 3 }, { 2, 4, 1 } });
+        var right = new Matrix(new[,] { { 5 }, { 1 } });
+        Assert.Throws<ArgumentException>(() => Matrix.Multiply(left, right));
+        Assert.Throws<ArgumentException>(() => Matrix.MultiplyInParallel(left, right));
     }
 }
-
-
-
