@@ -4,19 +4,20 @@ using System.Diagnostics;
 
 public class Measurements
 {
-    public void MeasureMultiplication()
+    
+    private int[,] dimensions = new [,] { { 100, 200 }, { 200, 200 }, { 400, 500 }, { 600, 600 } };
+    public void MeasureMultiplication(string path)
     {
         var resultNotParallel = new long[4][];
-        for (var i = 0; i < 5; ++i)
+        for (var i = 0; i < 4; ++i)
         {
             resultNotParallel[i] = new long[5];
         }
         var resultParallel = new long[4][];
-        for (var i = 0; i < 5; ++i)
+        for (var i = 0; i < 4; ++i)
         {
             resultParallel[i] = new long[5];
         }
-        var dimensions = new [,] { { 100, 200 }, { 200, 200 }, { 400, 500 }, { 600, 600 } };
         for (var i = 0; i < 4; ++i)
         {
             var stopWatch = new Stopwatch();
@@ -54,23 +55,32 @@ public class Measurements
             statisticsParallel[i, 0] = GetMathExpectation(resultParallel[i]);
             statisticsParallel[i, 1] = GetStandardDeviation(resultParallel[i]);
         }
+        WriteResultToFile(statisticsNotParallel, statisticsParallel, path);
     }
 
-    public void MakeResultInStringFormat(double[,] statisticsNotParallel, double[,] statisticsParallel)
+    private void WriteResultToFile(double[,] statisticsNotParallel, double[,] statisticsParallel, string path)
     {
-        
+        using var writer = new StreamWriter(path);
+        writer.WriteLine("Size 1|Size 2|Par\\NonPar MathExp|Par\\NonPar StandDev");
+        for (var i = 0; i < statisticsNotParallel.GetLength(0); ++i)
+        {
+            var str = $"{dimensions[i, 0]}x{dimensions[i, 1]}";
+            var str2 = $"{dimensions[i, 1]}x{dimensions[i, 0]}";
+            writer.WriteLine($"{str:<8} {str2:<8} {statisticsParallel[i, 0].ToString():<4}/" +
+                             $"{statisticsNotParallel[i, 0].ToString():<4}" +
+                         $" {statisticsParallel[i, 1].ToString():<4}/" +
+                             $"{statisticsNotParallel[i, 1].ToString():<4}");
+        }
     }
     
     private double GetMathExpectation(long[] results) =>
         results.Sum(t => t * 1d / results.GetLength(0));
     
     
-
     private double GetStandardDeviation(long[] results)
     {
         var mathExpectation = GetMathExpectation(results);
         var standardDeviation = results.Sum(t => (t - mathExpectation) * (t - mathExpectation));
         return Math.Sqrt(standardDeviation / (results.Length - 1));
     }
-    
 }
