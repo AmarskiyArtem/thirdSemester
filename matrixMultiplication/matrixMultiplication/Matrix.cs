@@ -41,9 +41,9 @@ public class Matrix
             }
         }
         var newElements = new int[matrix.Count, matrix[0].Length];
-        for (int i = 0; i < Rows; i++)
+        for (int i = 0; i < newElements.GetLength(0); i++)
         {
-            for (int j = 0; j < Columns; j++)
+            for (int j = 0; j < newElements.GetLength(1); j++)
             {
                 newElements[i, j] = matrix[i][j];
             }

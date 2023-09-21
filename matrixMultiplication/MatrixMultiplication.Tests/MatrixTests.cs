@@ -36,7 +36,25 @@ public class MatrixTests
             Assert.That(Matrix.Multiply(left, right) == Matrix.MultiplyInParallel(left, right), Is.True);
         }
     }
-    
+
+    [Test]
+    public void ReadFromFileShouldCorrectMatrix()
+    {
+        var correctMatrix = new Matrix(new[,] { { 23, -12, 35, 541 }, { 0, 11, 1111, -123 }, { 0, 23123, -1234, 44 } });
+        Assert.That(correctMatrix == new Matrix(@"../../../CorrectTestMatrix.txt"), Is.True);
+    }
+
+    [Test]
+    public void ReadFromNotExistingFileShouldException()
+    {
+        Assert.Throws<FileNotFoundException>(() => new Matrix(@"NotExisting.txt"));
+    }
+
+    [Test]
+    public void IncorrectMatrixShouldException()
+    {
+        Assert.Throws<ArgumentException>(() => new Matrix(@"../../../IncorrectMatrix.txt"));
+    }
 }
 
 
