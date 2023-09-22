@@ -1,9 +1,16 @@
 namespace MatrixMultiplication;
 
+/// <summary>
+/// A utility class for working with matrices.
+/// </summary>
 public static class MatrixUtils
 {
     private static Random rand = new();
     
+    /// <summary>
+    /// Generates a random integer matrix with the specified number of rows and columns.
+    /// </summary>
+    /// <returns>A Matrix object representing the generated integer matrix.</returns>
     public static Matrix CreateIntMatrix(int numberOfRows, int numberOfColumns)
     {
         var matrix = new int[numberOfRows, numberOfColumns];

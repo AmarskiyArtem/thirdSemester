@@ -2,10 +2,17 @@ namespace MatrixMultiplication;
 
 using System.Diagnostics;
 
+/// <summary>
+/// Represents a class for measuring matrix multiplication performance.
+/// </summary>
 public class Measurements
 {
-    private int[,] dimensions = new [,] { { 100, 200 }, { 200, 200 }, { 400, 500 }, { 600, 600 } };
+    private readonly int[,] dimensions = new [,] { { 100, 200 }, { 200, 200 }, { 400, 500 }, { 600, 600 } };
     
+    /// <summary>
+    /// Measures matrix multiplication performance and writes the results to a file.
+    /// </summary>
+    /// <param name="path">The path to the output file where the results will be written.</param>
     public void MeasureMultiplication(string path)
     {
         var resultNotParallel = new long[4][];
