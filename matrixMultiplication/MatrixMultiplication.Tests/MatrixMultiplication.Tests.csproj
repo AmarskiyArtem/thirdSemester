@@ -36,4 +36,19 @@
       </Compile>
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="CorrectTestMatrix.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="EmptyFile.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="ExtraSymbolsMatrix.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="IncorrectMatrix.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

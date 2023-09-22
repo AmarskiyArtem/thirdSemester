@@ -2,12 +2,6 @@ namespace MatrixMultiplication.Tests;
 
 public class MatrixTests
 {
-    [SetUp]
-    public void Setup()
-    {
-        
-    }
-
     [Test]
     public void MultiplicationShouldRightResult()
     {
@@ -22,7 +16,7 @@ public class MatrixTests
     {
         var left = new Matrix(new[,] { { 1, 4, 3 }, { 5, 0, 0 }, { 12, 1, 0 } });
         var right = new Matrix(new[,] { { 0 }, { 1 }, { 5 } });
-        Assert.That(Matrix.Multiply(left, right),
+        Assert.That(Matrix.MultiplyInParallel(left, right),
             Is.EqualTo(new Matrix(new[,] { {19}, {0}, {1} })));
     }
 
@@ -41,7 +35,7 @@ public class MatrixTests
     public void ReadFromFileShouldCorrectMatrix()
     {
         var correctMatrix = new Matrix(new[,] { { 23, -12, 35, 541 }, { 0, 11, 1111, -123 }, { 0, 23123, -1234, 44 } });
-        Assert.That(correctMatrix == new Matrix(@"../../../CorrectTestMatrix.txt"), Is.True);
+        Assert.That(correctMatrix == new Matrix(@"CorrectTestMatrix.txt"), Is.True);
     }
 
     [Test]
@@ -51,17 +45,17 @@ public class MatrixTests
 
     [Test]
     public void IncorrectMatrixShouldException() =>
-        Assert.Throws<ArgumentException>(() => new Matrix(@"../../../IncorrectMatrix.txt"));
+        Assert.Throws<ArgumentException>(() => new Matrix(@"IncorrectMatrix.txt"));
     
 
     [Test]
     public void EmptyFileShouldException() =>
-        Assert.Throws<ArgumentException>(() => new Matrix(@"../../../EmptyFile.txt"));
+        Assert.Throws<ArgumentException>(() => new Matrix(@"EmptyFile.txt"));
     
 
     [Test]
     public void ExtraSymbolsShouldException() =>
-        Assert.Throws<FormatException>(() => new Matrix(@"../../../ExtraSymbolsMatrix.txt"));
+        Assert.Throws<FormatException>(() => new Matrix(@"ExtraSymbolsMatrix.txt"));
 
     [Test]
     public void WrongDimensionsShouldException()

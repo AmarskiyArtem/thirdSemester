@@ -2,9 +2,10 @@ namespace MatrixMultiplication;
 
 public static class MatrixUtils
 {
+    private static Random rand = new();
+    
     public static Matrix CreateIntMatrix(int numberOfRows, int numberOfColumns)
     {
-        var rand = new Random();
         var matrix = new int[numberOfRows, numberOfColumns];
         for (var i = 0; i < matrix.GetLength(0); ++i)
         {
@@ -13,7 +14,6 @@ public static class MatrixUtils
                 matrix[i, j] = rand.Next(-100, 100);
             }
         }
-
         return new Matrix(matrix);
     }
 }

@@ -4,23 +4,20 @@ using System.Diagnostics;
 
 public class Measurements
 {
-    
     private int[,] dimensions = new [,] { { 100, 200 }, { 200, 200 }, { 400, 500 }, { 600, 600 } };
+    
     public void MeasureMultiplication(string path)
     {
         var resultNotParallel = new long[4][];
-        for (var i = 0; i < 4; ++i)
-        {
-            resultNotParallel[i] = new long[5];
-        }
         var resultParallel = new long[4][];
         for (var i = 0; i < 4; ++i)
         {
+            resultNotParallel[i] = new long[5];
             resultParallel[i] = new long[5];
         }
+        var stopWatch = new Stopwatch();
         for (var i = 0; i < 4; ++i)
         {
-            var stopWatch = new Stopwatch();
             var leftMatrix = MatrixUtils.CreateIntMatrix(dimensions[i, 0], dimensions[i, 1]);
             var rightMatrix = MatrixUtils.CreateIntMatrix(dimensions[i, 1], dimensions[i, 0]);
             
@@ -44,14 +41,11 @@ public class Measurements
         }
 
         var statisticsNotParallel = new double[4, 2];
+        var statisticsParallel = new double[4, 2];
         for (var i = 0; i < resultNotParallel.GetLength(0); ++i)
         {
             statisticsNotParallel[i, 0] = GetMathExpectation(resultNotParallel[i]);
             statisticsNotParallel[i, 1] = GetStandardDeviation(resultNotParallel[i]);
-        }
-        var statisticsParallel = new double[4, 2];
-        for (var i = 0; i < resultNotParallel.GetLength(0); ++i)
-        {
             statisticsParallel[i, 0] = GetMathExpectation(resultParallel[i]);
             statisticsParallel[i, 1] = GetStandardDeviation(resultParallel[i]);
         }
@@ -62,7 +56,7 @@ public class Measurements
     {
         using var writer = new StreamWriter(path);
         writer.WriteLine("Size 1|Size 2|Par\\NonPar MathExp|Par\\NonPar StandDev");
-        for (var i = 0; i < statisticsNotParallel.GetLength(0); ++i)
+        for (var i = 0; i < statisticsParallel.GetLength(0); ++i)
         {
             var str = $"{dimensions[i, 0]}x{dimensions[i, 1]}";
             var str2 = $"{dimensions[i, 1]}x{dimensions[i, 0]}";

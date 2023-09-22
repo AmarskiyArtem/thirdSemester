@@ -3,7 +3,7 @@
 using System.Text.RegularExpressions;
 
 
-public class Matrix
+public partial class Matrix
 {
     public int Rows => 
         Elements.GetLength(0);
@@ -56,8 +56,8 @@ public class Matrix
         Elements = (int[,])array.Clone();
     }
 
-    private bool IsCorrectMatrixLine(string line)
-        => Regex.IsMatch(line, @"^(-?\d+ ?)+$");
+    private static bool IsCorrectMatrixLine(string line)
+        => MyRegex().IsMatch(line);
 
     public static Matrix Multiply(Matrix leftMatrix, Matrix rightMatrix)
     {
@@ -67,11 +67,11 @@ public class Matrix
                 "should be equal to the number of rows of the right matrix");
         }
         var result = new int[leftMatrix.Rows, rightMatrix.Columns];
-        for (int i = 0; i < leftMatrix.Rows; i++)
+        for (var i = 0; i < leftMatrix.Rows; i++)
         {
-            for (int j = 0; j < rightMatrix.Columns; j++)
+            for (var j = 0; j < rightMatrix.Columns; j++)
             {
-                for (int k = 0; k < leftMatrix.Columns; k++)
+                for (var k = 0; k < leftMatrix.Columns; k++)
                 {
                     result[i, j] += leftMatrix.Elements[i, k] * rightMatrix.Elements[k, j];
                 }
@@ -85,34 +85,43 @@ public class Matrix
         if (leftMatrix.Columns != rightMatrix.Rows)
         {
             throw new ArgumentException("The number of columns of the left matrix " +
-                "should be equal to the number of rows of the right matrix");
+                                        "should be equal to the number of rows of the right matrix");
         }
+
         var result = new int[leftMatrix.Rows, rightMatrix.Columns];
-        var threads = new Thread[leftMatrix.Columns];
-        for (int i = 0; i < leftMatrix.Rows; i++)
+
+        var threads = new Thread[Environment.ProcessorCount];
+        var unitSize = leftMatrix.Rows / Environment.ProcessorCount;
+        for (var i = 0; i < Environment.ProcessorCount; ++i)
         {
-            var row = i;
-            threads[i] = new Thread(() =>
-            {
-                for (int j = 0; j < rightMatrix.Columns; j++)
-                {
-                    var sum = 0;
-                    for (int k = 0; k < leftMatrix.Columns; k++)
-                    {
-                        sum += leftMatrix.Elements[row, k] * rightMatrix.Elements[k, j];
-                    }
-                    result[row, j] = sum;
-                }
-            });
+            var unitStart = i * unitSize;
+            var unitEnd = (i == threads.Length - 1) ? leftMatrix.Rows : unitStart + unitSize ;
+            threads[i] = new Thread(() => MultiplyByUnits(unitStart, unitEnd, leftMatrix, rightMatrix, result));
             threads[i].Start();
         }
-        for (int i = 0; i < result.GetLength(0); i++)
+        
+        foreach (var t in threads)
         {
-            threads[i].Join();
+            t.Join();
         }
         return new Matrix(result);
     }
 
+    private static void MultiplyByUnits(int start, int end, Matrix leftMatrix, Matrix rightMatrix, int[,] result)
+    {
+        for (var i = start; i < end; ++i)
+        {
+            for (var j = 0; j < rightMatrix.Columns; ++j)
+            {
+                for (var k = 0; k < leftMatrix.Columns; ++k)
+                {
+                    result[i, j] += leftMatrix.Elements[i, k] * rightMatrix.Elements[k, j];
+                }
+
+            }
+        }
+    }
+    
     public void WriteToFile(string path)
     {
         using var writer = new StreamWriter(path);
@@ -164,4 +173,6 @@ public class Matrix
 
     public override int GetHashCode() =>
         base.GetHashCode();
+    [GeneratedRegex(@"^-?\d+ ?( -?\d+)*$")]
+    private static partial Regex MyRegex();
 }
