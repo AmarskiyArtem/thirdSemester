@@ -4,6 +4,7 @@ public class LazyMultithreading<T> : ILazy<T>
 {
     public LazyMultithreading(Func<T> func)
     {
+        ArgumentNullException.ThrowIfNull(func);
         supplier = func;
     }
     
@@ -14,17 +15,34 @@ public class LazyMultithreading<T> : ILazy<T>
     private T? result;
 
     private volatile bool isComputed;
+
+    private volatile Exception? supplierException;
     
     public T? Get()
     {
+        if (supplierException is null)
+        {
+            throw supplierException;
+        }
         lock (lockObject)
         {
             if (!isComputed)
             {
-                result = supplier();
-                isComputed = true;
+                try
+                {
+                    result = supplier();
+                }
+                catch (Exception e)
+                {
+                    supplierException = e;
+                    throw;
+                }
+                finally
+                {
+                    supplier = null;
+                    isComputed = true;
+                }
             }
-            Monitor.Pulse(lockObject);
             return result;
         }
     }
