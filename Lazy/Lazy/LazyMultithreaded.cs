@@ -5,45 +5,53 @@ public class LazyMultithreading<T> : ILazy<T>
     public LazyMultithreading(Func<T> func)
     {
         ArgumentNullException.ThrowIfNull(func);
-        supplier = func;
+        _supplier = func;
     }
-    
-    private Object lockObject = new();
 
-    private Func<T> supplier;
+    private readonly Mutex _mutex = new();
 
-    private T? result;
+    private Func<T>? _supplier;
 
-    private volatile bool isComputed;
+    private T? _result;
 
-    private volatile Exception? supplierException;
+    private volatile bool _isComputed;
+
+    private volatile Exception? _supplierException;
     
     public T? Get()
     {
-        if (supplierException is null)
+        if (_supplierException is not null)
         {
-            throw supplierException;
+            throw _supplierException;
         }
-        lock (lockObject)
+
+        if (_isComputed)
         {
-            if (!isComputed)
-            {
-                try
-                {
-                    result = supplier();
-                }
-                catch (Exception e)
-                {
-                    supplierException = e;
-                    throw;
-                }
-                finally
-                {
-                    supplier = null;
-                    isComputed = true;
-                }
-            }
-            return result;
+            return _result;
         }
+        
+        _mutex.WaitOne();
+        if (_isComputed)
+        {
+            return Get();
+        }
+
+        try
+        {
+            _result = _supplier!();
+        }
+        catch (Exception e)
+        {
+            _supplierException = e;
+            throw;
+        }
+        finally
+        {
+            _supplier = null;
+            _isComputed = true;
+        }
+
+        _mutex.ReleaseMutex();
+        return _result;
     }
 }

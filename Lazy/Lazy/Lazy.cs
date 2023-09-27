@@ -2,45 +2,45 @@ namespace Lazy;
 
 public class Lazy<T>: ILazy<T>
 {
-    private Func<T>? supplier;
+    private Func<T>? _supplier;
 
-    private bool isComputed;
+    private bool _isComputed;
 
-    private T? result;
+    private T? _result;
 
-    private Exception? supplierException;
+    private Exception? _supplierException;
     
     public Lazy(Func<T> func)
     {
         ArgumentNullException.ThrowIfNull(func);
-        supplier = func;
+        _supplier = func;
     }
     
     public T? Get()
     {
-        if (supplierException is null)
+        if (_supplierException is not null)
         {
-            throw supplierException;
+            throw _supplierException;
         }
         
-        if (!isComputed)
+        if (!_isComputed)
         {
             try
             {
-                result = supplier();
+                _result = _supplier!();
             }
             catch (Exception e)
             {
-                supplierException = e;
+                _supplierException = e;
                 throw;
             }
             finally
             {
-                isComputed = true;
-                supplier = null;
+                _isComputed = true;
+                _supplier = null;
             }
         }
 
-        return result;
+        return _result;
     }
 }
