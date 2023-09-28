@@ -1,7 +1,15 @@
 namespace Lazy;
 
+/// <summary>
+/// Multi thread ILazy implementation
+/// </summary>
 public class LazyMultithreading<T> : ILazy<T>
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LazyMultithreading{T}"/> class with the specified value supplier function.
+    /// </summary>
+    /// <param name="func">The function that supplies the value when requested.</param>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="func"/> is null.</exception>
     public LazyMultithreading(Func<T> func)
     {
         ArgumentNullException.ThrowIfNull(func);
@@ -18,6 +26,7 @@ public class LazyMultithreading<T> : ILazy<T>
 
     private volatile Exception? _supplierException;
     
+    /// <inheritdoc/>
     public T? Get()
     {
         if (_supplierException is not null)
