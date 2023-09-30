@@ -7,8 +7,8 @@ public class Tests
     [Test]
     public void NullFuncShouldException()
     {
-        Assert.Throws<ArgumentNullException>(() => new Lazy<object?>(null));
-        Assert.Throws<ArgumentNullException>(() => new LazyMultithreading<object>(null));
+        Assert.Throws<ArgumentNullException>(() => new Lazy<object?>(null!));
+        Assert.Throws<ArgumentNullException>(() => new LazyMultithreading<object>(null!));
     }
 
     [Test]
