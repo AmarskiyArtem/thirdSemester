@@ -42,6 +42,7 @@ public class LazyMultithreading<T> : ILazy<T>
         _mutex.WaitOne();
         if (_isComputed)
         {
+            _mutex.ReleaseMutex();
             return Get();
         }
 
@@ -58,9 +59,8 @@ public class LazyMultithreading<T> : ILazy<T>
         {
             _supplier = null;
             _isComputed = true;
+            _mutex.ReleaseMutex();
         }
-
-        _mutex.ReleaseMutex();
         return _result;
     }
 }
