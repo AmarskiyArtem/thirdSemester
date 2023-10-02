@@ -5,6 +5,16 @@ namespace Lazy;
 /// </summary>
 public class LazyMultithreading<T> : ILazy<T>
 {
+    private Func<T>? _supplier;
+
+    private T? _result;
+
+    private volatile bool _isComputed;
+
+    private volatile Exception? _supplierException;
+    
+    private readonly Mutex _mutex = new();
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="LazyMultithreading{T}"/> class with the specified value supplier function.
     /// </summary>
@@ -15,16 +25,6 @@ public class LazyMultithreading<T> : ILazy<T>
         ArgumentNullException.ThrowIfNull(func);
         _supplier = func;
     }
-
-    private readonly Mutex _mutex = new();
-
-    private Func<T>? _supplier;
-
-    private T? _result;
-
-    private volatile bool _isComputed;
-
-    private volatile Exception? _supplierException;
     
     /// <inheritdoc/>
     public T? Get()

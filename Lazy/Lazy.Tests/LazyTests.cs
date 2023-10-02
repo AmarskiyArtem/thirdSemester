@@ -4,26 +4,16 @@ public class Tests
 {
     private static readonly Random Rand = new();
     
-    [Test]
-    public void NullFuncShouldException()
+    [TestCaseSource(nameof(NullFuncs))]
+    public void NullFuncShouldException(Func<object> func)
     {
-        Assert.Throws<ArgumentNullException>(() => new Lazy<object?>(null!));
-        Assert.Throws<ArgumentNullException>(() => new LazyMultithreading<object>(null!));
+        Assert.Throws<ArgumentNullException>(() => new Lazy<object?>(func));
     }
 
-    [Test]
-    public void FuncWithException()
+    [TestCaseSource(nameof(LazyWithException))]
+    public void FuncWithException(ILazy<object> lazy)
     {
-        Assert.Throws<Exception>(() =>
-        {
-            var lazy = new Lazy<object>(() => throw new Exception());
-            lazy.Get();
-        });
-        Assert.Throws<Exception>(() =>
-        {
-            var lazy = new LazyMultithreading<object>(() => throw new Exception());
-            lazy.Get();
-        });
+        Assert.Throws<Exception>(() => lazy.Get());
     }
 
     [Test]
@@ -32,18 +22,41 @@ public class Tests
         int Func() => Rand.Next();
         var lazy = new LazyMultithreading<int>(Func);
         var list = new List<int>();
-        var threads = new Thread[Environment.ProcessorCount];
+        var threads = new Thread[8];
         for (var i = 0; i < threads.Length; ++i)
         {
             threads[i] = new Thread(() => list.Add(lazy.Get()));
-            threads[i].Start();
         }
 
+        foreach (var thread in threads)
+        {
+            thread.Start();
+        }
+        
         foreach (var thread in threads)
         {
             thread.Join();
         }
         
         Assert.That(list.Distinct().Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void LazyOneThreadShouldComputedOnce()
+    {
+        var lazy = new Lazy<int>(() => Rand.Next());
+        Assert.That(lazy.Get() == lazy.Get(), Is.True);
+    }
+
+    private static IEnumerable<ILazy<object>> LazyWithException()
+    {
+        yield return new Lazy<object>(() => throw new Exception());
+        yield return new LazyMultithreading<object>(() => throw new Exception());
+    }
+
+    private static IEnumerable<Func<object>> NullFuncs()
+    {
+        yield return null;
+        yield return null;
     }
 }

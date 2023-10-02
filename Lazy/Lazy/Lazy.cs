@@ -13,7 +13,6 @@ public class Lazy<T>: ILazy<T>
 
     private Exception? _supplierException;
     
-    
     /// <summary>
     /// Initializes a new instance of the <see cref="Lazy{T}"/> class with the specified value supplier function.
     /// </summary>
