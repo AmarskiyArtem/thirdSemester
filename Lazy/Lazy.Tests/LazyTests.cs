@@ -61,7 +61,7 @@ public class Tests
         yield return new LazyMultithreading<object>(() => throw new Exception());
     }
 
-    private static IEnumerable<Func<object>>?> NullFuncs()
+    private static IEnumerable<Func<object>?> NullFuncs()
     {
         yield return null;
         yield return null;
