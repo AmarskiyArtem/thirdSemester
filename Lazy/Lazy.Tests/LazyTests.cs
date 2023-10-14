@@ -9,13 +9,14 @@ public class Tests
     {
         Assert.Throws<ArgumentNullException>(() => new Lazy<object?>(func));
     }
-
+    
     [TestCaseSource(nameof(LazyWithException))]
     public void FuncWithException(ILazy<object> lazy)
     {
         Assert.Throws<Exception>(() => lazy.Get());
     }
 
+    
     [Test]
     public void MultithreadingTestShouldNoRaces()
     {
