@@ -6,39 +6,107 @@ using System.Text;
 
 class Server
 {
-    private readonly int _port;
-    private readonly CancellationTokenSource _cts = new();
-    private readonly TcpListener _listener;
+    private CancellationTokenSource _cts = new();
+    private readonly TcpListener _server;
     
     public Server(int port)
     {
-        _port = port;
-        _listener = new(IPAddress.Any, _port);
+        _server = new(IPAddress.Any, port);
     }
 
-    private async Task GetAsync(string path, StreamWriter streamWriter)
+    public void Stop() =>
+        _cts.Cancel();
+    
+    
+    public async Task StartAsync()
+    {
+        try
+        {
+            _server.Start();
+            var tasks = new List<Task>();
+            while (!_cts.IsCancellationRequested)
+            {
+                var client = await _server.AcceptTcpClientAsync();
+                tasks.Add(Task.Run(async () => await HandleClientAsync(client)));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+        finally
+        {
+            _server.Stop();
+            Clear();
+        }
+    }
+
+    private async Task HandleClientAsync(TcpClient client)
+    {
+        try
+        {
+            var stream = client.GetStream();
+            while (client.Connected && _cts.IsCancellationRequested)
+            {
+                var buffer = new byte[client.ReceiveBufferSize];
+                var data = await stream.ReadAsync(buffer);
+                var request = Encoding.UTF8.GetString(buffer, 0, data).Split(" ");
+                if (request.Length != 2)
+                {
+                    await SendDataAsync("-1"u8.ToArray(), stream);
+                }
+
+                switch (request[0])
+                {
+                    case "1":
+                    {
+                        await SendDataAsync(await ListAsync(request[1]), stream);
+                        break;
+                    }
+                    case "2":
+                    {
+                        var bytes = await GetAsync(request[1]);
+                        await SendDataAsync(BitConverter.GetBytes(bytes.Length), stream);
+                        await SendDataAsync(bytes, stream);
+                        break;
+                    }
+                    default:
+                    {
+                        await SendDataAsync("Unknown command"u8.ToArray(), stream);
+                        break;
+                    }
+                }
+
+
+            }
+        }
+        finally
+        {
+            client.Dispose();
+            Clear();
+        }
+    }
+    
+    private async Task SendDataAsync(byte[] data, Stream stream)
+    {
+        await stream.WriteAsync(data);
+        await stream.FlushAsync();
+    }
+    
+    private async Task<byte[]> GetAsync(string path)
     {
         if (!File.Exists(path))
         {
-            streamWriter.WriteAsync("-1");
-            streamWriter.FlushAsync();
-            return;
+            return "-1"u8.ToArray();
         }
-
-        var data = await File.ReadAllBytesAsync(path, _cts.Token);
-        var dataString = BitConverter.ToString(data);
-        streamWriter.WriteAsync($"{dataString.Length} {dataString}");
-        streamWriter.FlushAsync();
+        
+        return await File.ReadAllBytesAsync(path);
     }
-
-    private async Task ListAsync(string path, StreamWriter streamWriter)
+    
+    private async Task<byte[]> ListAsync(string path)
     {
         var directoryInfo = new DirectoryInfo(path);
         if (!directoryInfo.Exists)
         {
-            streamWriter.WriteAsync("-1");
-            streamWriter.FlushAsync();
-            return;
+            return "-1"u8.ToArray();
         }
         
         var response = new StringBuilder();
@@ -54,7 +122,11 @@ class Server
         }
 
         response.Append("\n");
-        streamWriter.WriteAsync(response.ToString());
-        streamWriter.FlushAsync();
+        return Encoding.UTF8.GetBytes(response.ToString());
+    }
+
+    private void Clear()
+    {
+        _cts = new CancellationTokenSource();
     }
 }
