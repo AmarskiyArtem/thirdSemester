@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -27,4 +27,16 @@ class Client
 
         client.Close();
     }
+}*/
+var directoryInfo = new DirectoryInfo("../../../../");
+Console.WriteLine("Files:");
+foreach (var file in directoryInfo.GetFiles())
+{
+    Console.WriteLine(file.Name); // Display only the file name
+}
+
+Console.WriteLine("Folders:");
+foreach (var subDirectory in directoryInfo.GetDirectories())
+{
+    Console.WriteLine(subDirectory.Name); // Display only the folder name
 }

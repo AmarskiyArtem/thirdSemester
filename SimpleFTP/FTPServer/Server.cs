@@ -1,50 +1,60 @@
-﻿using System.Net;
+﻿namespace SimpleFTP;
+
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
 class Server
 {
-    static void Main()
+    private readonly int _port;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly TcpListener _listener;
+    
+    public Server(int port)
     {
-        int port = 7000;
-        TcpListener server = new TcpListener(IPAddress.Any, 7000);
+        _port = port;
+        _listener = new(IPAddress.Any, _port);
+    }
 
-        server.Start();
-        Console.WriteLine("Сервер запущен. Ожидание подключения клиента...");
-
-        TcpClient client = server.AcceptTcpClient();
-        Console.WriteLine("Клиент подключен.");
-
-        NetworkStream stream = client.GetStream();
-        byte[] data = new byte[client.ReceiveBufferSize];
-        int bytes;
-
-        while (true)
+    private async Task GetAsync(string path, StreamWriter streamWriter)
+    {
+        if (!File.Exists(path))
         {
-            bytes = stream.Read(data, 0, data.Length);
-            string message = Encoding.Unicode.GetString(data, 0, bytes);
-            //Console.WriteLine("Клиент: " + message);
-            string response = "";
-            if (message.StartsWith("List"))
-            {
-                Console.WriteLine(message.Split(' ')[1]);
-                var files = Directory.GetFiles(message.Split(' ')[1]);
-                var directories = Directory.GetDirectories(message.Split(' ')[1]);
-                foreach (var file in files)
-                {
-                    response += file + "\n";
-                }
-                foreach (var file in directories)
-                {
-                    response += file + "\n";
-                }
-            }
-            data = Encoding.Unicode.GetBytes(response);
-            stream.Write(data, 0, data.Length);
-            stream.Flush();
+            streamWriter.WriteAsync("-1");
+            streamWriter.FlushAsync();
+            return;
         }
 
-        client.Close();
-        server.Stop();
+        var data = await File.ReadAllBytesAsync(path, _cts.Token);
+        var dataString = BitConverter.ToString(data);
+        streamWriter.WriteAsync($"{dataString.Length} {dataString}");
+        streamWriter.FlushAsync();
+    }
+
+    private async Task ListAsync(string path, StreamWriter streamWriter)
+    {
+        var directoryInfo = new DirectoryInfo(path);
+        if (!directoryInfo.Exists)
+        {
+            streamWriter.WriteAsync("-1");
+            streamWriter.FlushAsync();
+            return;
+        }
+        
+        var response = new StringBuilder();
+        response.Append($"{directoryInfo.GetFiles().Length + directoryInfo.GetDirectories().Length} ");
+        foreach (var file in directoryInfo.GetFiles())
+        {
+            response.Append($"{file} false");
+        }
+
+        foreach (var directory in directoryInfo.GetDirectories())
+        {
+            response.Append($"{directory} true");
+        }
+
+        response.Append("\n");
+        streamWriter.WriteAsync(response.ToString());
+        streamWriter.FlushAsync();
     }
 }
