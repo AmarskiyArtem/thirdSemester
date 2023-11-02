@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ConsoleChat": {
+      "commandName": "Project",
+      "commandLineArgs": "localhost 8888"
+    }
+  }
+}
