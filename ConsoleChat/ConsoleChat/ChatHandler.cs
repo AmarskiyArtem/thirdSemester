@@ -2,7 +2,7 @@ namespace ConsoleChat;
 
 public static class ChatHandler
 {
-    public static Task Read(Stream stream, CancellationTokenSource cts, Action exit)
+    public static Task Read(Stream stream, CancellationTokenSource cts)
     {
         Task.Run(async () =>
         {
@@ -12,16 +12,16 @@ public static class ChatHandler
                 var message = await streamReader.ReadLineAsync();
                 if (message == "exit")
                 {
-                    break;
+                    await cts.CancelAsync();
+                    Environment.Exit(0);
                 }
                 Console.WriteLine(message);
             }
-            exit.Invoke();
         });
         return Task.CompletedTask;
     }
 
-    public static Task Write(Stream stream, CancellationTokenSource cts, Action exit)
+    public static Task Write(Stream stream, CancellationTokenSource cts)
     {
         return Task.Run(async () =>
         {
@@ -31,13 +31,12 @@ public static class ChatHandler
                 var message = Console.ReadLine();
                 if (message == "exit")
                 {
-                    break;
+                    await cts.CancelAsync();
                 }
                 
                 await streamWriter.WriteLineAsync(message);
                 await streamWriter.FlushAsync();
             }
-            exit.Invoke();
         });
     }
 }

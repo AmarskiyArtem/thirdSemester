@@ -15,12 +15,7 @@ public class Client
     public async Task Start()
     {
         var stream = _client.GetStream();
-        await ChatHandler.Read(stream, _cancellationTokenSource, Exit);
-        await ChatHandler.Write(stream, _cancellationTokenSource, Exit);
-    }
-
-    private void Exit()
-    {
-        _client.Close();
+        await ChatHandler.Read(stream, _cancellationTokenSource);
+        await ChatHandler.Write(stream, _cancellationTokenSource);
     }
 }

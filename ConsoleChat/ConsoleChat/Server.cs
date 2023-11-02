@@ -21,13 +21,7 @@ public class Server
         var client = await _server.AcceptTcpClientAsync();
         var stream = client.GetStream();
         Console.WriteLine("Client connected");
-        ChatHandler.Read(stream, _cancellationTokenSource, Exit);
-        await ChatHandler.Write(stream, _cancellationTokenSource, Exit);
+        ChatHandler.Read(stream, _cancellationTokenSource);
+        await ChatHandler.Write(stream, _cancellationTokenSource);
     }
-
-    private void Exit()
-    {
-        _server.Stop();
-    }
-    
 }
