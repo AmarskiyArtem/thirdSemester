@@ -11,10 +11,8 @@ public static class ChatHandler
     /// <param name="stream">The input stream from which messages are read.</param>
     /// <param name="cts">A CancellationTokenSource for possible cancellation of the operation.</param>
     /// <returns>A Task representing the asynchronous read operation.</returns>
-    public static Task Read(Stream stream, CancellationTokenSource cts)
+    public static async Task Read(Stream stream, CancellationTokenSource cts)
     {
-        Task.Run(async () =>
-        {
             using var streamReader = new StreamReader(stream);
             while (!cts.IsCancellationRequested)
             {
@@ -22,12 +20,9 @@ public static class ChatHandler
                 if (message == "exit")
                 {
                     await cts.CancelAsync();
-                    Environment.Exit(0);
                 }
                 Console.WriteLine(message);
             }
-        });
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -36,10 +31,8 @@ public static class ChatHandler
     /// <param name="stream">The output stream to which messages are written.</param>
     /// <param name="cts">A CancellationTokenSource for possible cancellation of the operation.</param>
     /// <returns>A Task representing the asynchronous write operation.</returns>
-    public static Task Write(Stream stream, CancellationTokenSource cts)
+    public static async Task Write(Stream stream, CancellationTokenSource cts)
     {
-        return Task.Run(async () =>
-        {
             await using var streamWriter = new StreamWriter(stream);
             while (!cts.IsCancellationRequested)
             {
@@ -52,6 +45,5 @@ public static class ChatHandler
                 await streamWriter.WriteLineAsync(message);
                 await streamWriter.FlushAsync();
             }
-        });
     }
 }

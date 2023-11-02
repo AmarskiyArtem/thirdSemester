@@ -30,7 +30,12 @@ public class Server
         var client = await _server.AcceptTcpClientAsync();
         var stream = client.GetStream();
         Console.WriteLine("Client connected");
-        ChatHandler.Read(stream, _cancellationTokenSource);
-        await ChatHandler.Write(stream, _cancellationTokenSource);
+        var task = Task.Run(() =>
+        {
+            #pragma warning disable cs4014
+            ChatHandler.Read(stream, _cancellationTokenSource);
+            ChatHandler.Write(stream, _cancellationTokenSource);
+        });
+        task.Wait();
     }
 }

@@ -26,7 +26,12 @@ public class Client
     public async Task Start()
     {
         var stream = _client.GetStream();
-        await ChatHandler.Read(stream, _cancellationTokenSource);
-        await ChatHandler.Write(stream, _cancellationTokenSource);
+        var task = Task.Run(() =>
+        {
+            #pragma warning disable cs4014
+            ChatHandler.Read(stream, _cancellationTokenSource);
+            ChatHandler.Write(stream, _cancellationTokenSource);
+        });
+        task.Wait();
     }
 }
