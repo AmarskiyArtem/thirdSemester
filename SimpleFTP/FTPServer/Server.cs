@@ -47,8 +47,8 @@ class Server
             while (client.Connected && _cts.IsCancellationRequested)
             {
                 var buffer = new byte[client.ReceiveBufferSize];
-                var data = await stream.ReadAsync(buffer);
-                var request = Encoding.UTF8.GetString(buffer, 0, data).Split(" ");
+                var count = await stream.ReadAsync(buffer);
+                var request = Encoding.UTF8.GetString(buffer, 0, count).Split(" ");
                 if (request.Length != 2)
                 {
                     await SendDataAsync("-1"u8.ToArray(), stream);

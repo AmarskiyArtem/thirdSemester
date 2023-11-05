@@ -28,15 +28,6 @@ class Client
         client.Close();
     }
 }*/
-var directoryInfo = new DirectoryInfo("../../../../");
-Console.WriteLine("Files:");
-foreach (var file in directoryInfo.GetFiles())
-{
-    Console.WriteLine(file.Name); // Display only the file name
-}
-
-Console.WriteLine("Folders:");
-foreach (var subDirectory in directoryInfo.GetDirectories())
-{
-    Console.WriteLine(subDirectory.Name); // Display only the folder name
-}
+var client = new Client.Client(7000);
+await client.StartAsync();
+while(true){}
