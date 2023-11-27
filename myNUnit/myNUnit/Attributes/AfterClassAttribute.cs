@@ -1,7 +1,7 @@
 namespace myNUnit;
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class AfterClassAttribute
+public class AfterClassAttribute : Attribute
 {
     
 }

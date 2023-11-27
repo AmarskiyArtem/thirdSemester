@@ -1,7 +1,7 @@
 namespace myNUnit;
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
-public class BeforeAttribute
+public class BeforeAttribute : Attribute
 {
     
 }

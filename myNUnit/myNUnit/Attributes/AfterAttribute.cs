@@ -1,9 +1,7 @@
-using System.ComponentModel;
-
 namespace myNUnit;
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
-public class AfterAttribute
+public class AfterAttribute : Attribute
 {
     
 }
