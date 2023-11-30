@@ -27,7 +27,6 @@ public class Tests
     public void FileNotExistShouldException(Func<string, byte[]> checkSum)
         => Assert.Throws<ArgumentException>(() => checkSum.Invoke("NotExist.py"));
     
-
     [TestCaseSource(nameof(funcs))]
     public void DirectoryNotExistShouldException(Func<string, byte[]> checkSum)
         => Assert.Throws<ArgumentException>(() => checkSum.Invoke("./NotExist/"));
