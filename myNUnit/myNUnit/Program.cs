@@ -1,3 +1,10 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using myNUnit;
 
-Console.WriteLine("Hello, World!");
+if (args.Length != 1)
+{
+    Console.WriteLine("Enter the path to test project");
+}
+else
+{
+    
+}
