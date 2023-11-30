@@ -9,8 +9,6 @@ using System.Security.Cryptography;
 /// </summary>
 public static class CheckSum
 {
-
-
     /// <summary>
     /// Computes the MD5 checksum for a given file or directory
     /// </summary>
