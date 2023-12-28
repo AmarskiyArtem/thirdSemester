@@ -17,71 +17,54 @@ class Server
     public void Stop() =>
         _cts.Cancel();
     
-    
     public async Task StartAsync()
     {
-        try
+        _server.Start();
+        while (!_cts.IsCancellationRequested)
         {
-            _server.Start();
-            var tasks = new List<Task>();
-            while (!_cts.IsCancellationRequested)
+            var client = await _server.AcceptTcpClientAsync(_cts.Token);
+            Task.Run(async () =>
             {
-                var client = await _server.AcceptTcpClientAsync();
-                tasks.Add(Task.Run(async () => await HandleClientAsync(client)));
-            }
-
-            await Task.WhenAll(tasks);
-        }
-        finally
-        {
-            _server.Stop();
-            Clear();
+                HandleClientAsync(client);
+            });
         }
     }
 
     private async Task HandleClientAsync(TcpClient client)
     {
-        try
+        await using var stream = client.GetStream();
+        while (client.Connected && _cts.IsCancellationRequested)
         {
-            var stream = client.GetStream();
-            while (client.Connected && _cts.IsCancellationRequested)
+            var buffer = new byte[client.ReceiveBufferSize];
+            var count = await stream.ReadAsync(buffer);
+            var request = Encoding.UTF8.GetString(buffer, 0, count).Split(" ");
+            if (request.Length != 2)
             {
-                var buffer = new byte[client.ReceiveBufferSize];
-                var count = await stream.ReadAsync(buffer);
-                var request = Encoding.UTF8.GetString(buffer, 0, count).Split(" ");
-                if (request.Length != 2)
-                {
-                    await SendDataAsync("-1"u8.ToArray(), stream);
-                }
-
-                switch (request[0])
-                {
-                    case "1":
-                    {
-                        await SendDataAsync(await ListAsync(request[1]), stream);
-                        break;
-                    }
-                    case "2":
-                    {
-                        var bytes = await GetAsync(request[1]);
-                        await SendDataAsync(BitConverter.GetBytes(bytes.Length), stream);
-                        await SendDataAsync(bytes, stream);
-                        break;
-                    }
-                    default:
-                    {
-                        await SendDataAsync("Unknown command"u8.ToArray(), stream);
-                        break;
-                    }
-                }
-
-
+                await SendDataAsync("-1"u8.ToArray(), stream);
             }
-        }
-        finally
-        {
-            client.Dispose();
-            Clear();
+
+            switch (request[0])
+            {
+                case "1":
+                {
+                    await SendDataAsync(await ListAsync(request[1]), stream);
+                    break;
+                }
+                case "2":
+                {
+                    var bytes = await GetAsync(request[1]);
+                    await SendDataAsync(BitConverter.GetBytes(bytes.Length), stream);
+                    await SendDataAsync(bytes, stream);
+                    break;
+                }
+                default:
+                {
+                    await SendDataAsync("Unknown command"u8.ToArray(), stream);
+                    break;
+                }
+            }
+
+
         }
     }
     

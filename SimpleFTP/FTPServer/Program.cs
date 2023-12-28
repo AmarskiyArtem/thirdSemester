@@ -1,9 +1,22 @@
 using SimpleFTP;
-/*if (args.Length == 2)
+
+if (args.Length is 0 or > 2)
+{
+    Console.WriteLine("Port expected as first arg, working dir as second (optional)");
+    return;
+}
+
+if (args.Length == 2)
 {
     Environment.CurrentDirectory = args[0];
-}*/
-Environment.CurrentDirectory = @"C:\myFiles\programming\university\thirdSemester";
-var server = new Server(7000);
-await server.StartAsync();
-while(true){}
+}
+
+var server = new Server(int.Parse(args[0]));
+try
+{
+    await server.StartAsync();
+}
+catch (Exception e) when (e is IOException)
+{
+    Console.WriteLine("Client connection error.");
+}

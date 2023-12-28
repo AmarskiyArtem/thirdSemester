@@ -9,7 +9,6 @@ public class Client : IDisposable
     private readonly string _serverIp = "localhost";
     private readonly TcpClient _client;
     
-
     public Client(int port)
     {
         _client = new TcpClient(_serverIp, port);
