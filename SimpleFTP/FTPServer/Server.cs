@@ -1,115 +1,109 @@
-﻿namespace SimpleFTP;
+﻿namespace FTPServer;
 
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
-class Server
+/// <summary>
+/// Represents a FTP server that can handle requests from FTP clients.
+/// </summary>
+public class Server
 {
-    private CancellationTokenSource _cts = new();
-    private readonly TcpListener _server;
-    
+    private readonly TcpListener _listener;
+    private readonly int _port;
+    private readonly CancellationTokenSource _cts = new();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Server"/> class.
+    /// </summary>
+    /// <param name="port">The port to listen on.</param>
     public Server(int port)
     {
-        _server = new(IPAddress.Any, port);
+        if (port < 0 || port > 65535)
+        {
+            throw new ArgumentException("Incorrect port value.");
+        }
+
+        _port = port;
+        _listener = new TcpListener(IPAddress.Any, _port);
     }
 
-    public void Stop() =>
-        _cts.Cancel();
-    
+    /// <summary>
+    /// Starts the FTP server.
+    /// </summary>
     public async Task StartAsync()
     {
-        _server.Start();
-        while (!_cts.IsCancellationRequested)
+        _listener.Start();
+
+        while (!_cts.Token.IsCancellationRequested)
         {
-            var client = await _server.AcceptTcpClientAsync(_cts.Token);
+            var client = await _listener.AcceptTcpClientAsync();
             Task.Run(async () =>
             {
-                HandleClientAsync(client);
+                await using var stream = client.GetStream();
+                using var reader = new StreamReader(stream);
+                using var writer = new StreamWriter(stream);
+
+                string? request;
+                while ((request = await reader.ReadLineAsync()) != null)
+                {
+                    if (request.StartsWith("1 "))
+                    {
+                        await HandleListAsync(request[2..], writer);
+                    }
+
+                    if (request.StartsWith("2 "))
+                    {
+                        await HandleGetAsync(request[2..], writer);
+                    }
+                }
+                client.Close();
             });
         }
     }
 
-    private async Task HandleClientAsync(TcpClient client)
+    /// <summary>
+    /// Stop the FTP server.
+    /// </summary> <summary>
+    public void Stop()
     {
-        await using var stream = client.GetStream();
-        while (client.Connected && _cts.IsCancellationRequested)
+        _cts.Cancel();
+        _listener.Stop();
+    }
+
+    private static async Task HandleListAsync(string path, StreamWriter writer)
+    {
+        if (!Directory.Exists(path))
         {
-            var buffer = new byte[client.ReceiveBufferSize];
-            var count = await stream.ReadAsync(buffer);
-            var request = Encoding.UTF8.GetString(buffer, 0, count).Split(" ");
-            if (request.Length != 2)
-            {
-                await SendDataAsync("-1"u8.ToArray(), stream);
-            }
-
-            switch (request[0])
-            {
-                case "1":
-                {
-                    await SendDataAsync(await ListAsync(request[1]), stream);
-                    break;
-                }
-                case "2":
-                {
-                    var bytes = await GetAsync(request[1]);
-                    await SendDataAsync(BitConverter.GetBytes(bytes.Length), stream);
-                    await SendDataAsync(bytes, stream);
-                    break;
-                }
-                default:
-                {
-                    await SendDataAsync("Unknown command"u8.ToArray(), stream);
-                    break;
-                }
-            }
-
-
+            await writer.WriteLineAsync("-1");
+            await writer.FlushAsync();
+            return;
         }
+
+        var entries = Directory.GetFileSystemEntries(path);
+        Array.Sort(entries);
+
+        await writer.WriteAsync($"{entries.Length}");
+        foreach (var entry in entries)
+        {
+            var isDirectory = Directory.Exists(entry);
+            await writer.WriteAsync($" {Path.GetFileName(entry)} {isDirectory}");
+        }
+        await writer.WriteLineAsync();
+        await writer.FlushAsync();
     }
-    
-    private async Task SendDataAsync(byte[] data, Stream stream)
-    {
-        await stream.WriteAsync(data);
-        await stream.FlushAsync();
-    }
-    
-    private async Task<byte[]> GetAsync(string path)
+
+    private static async Task HandleGetAsync(string path, StreamWriter writer)
     {
         if (!File.Exists(path))
         {
-            return "-1"u8.ToArray();
-        }
-        
-        return await File.ReadAllBytesAsync(path);
-    }
-    
-    private async Task<byte[]> ListAsync(string path)
-    {
-        var directoryInfo = new DirectoryInfo(path);
-        if (!directoryInfo.Exists)
-        {
-            return "-1"u8.ToArray();
-        }
-        
-        var response = new StringBuilder();
-        response.Append($"{directoryInfo.GetFiles().Length + directoryInfo.GetDirectories().Length} ");
-        foreach (var file in directoryInfo.GetFiles())
-        {
-            response.Append($"{file} false");
+            await writer.WriteLineAsync("-1");
+            await writer.FlushAsync();
+            return;
         }
 
-        foreach (var directory in directoryInfo.GetDirectories())
-        {
-            response.Append($"{directory} true");
-        }
-
-        response.Append("\n");
-        return Encoding.UTF8.GetBytes(response.ToString());
-    }
-
-    private void Clear()
-    {
-        _cts = new CancellationTokenSource();
+        var content = await File.ReadAllBytesAsync(path);
+        string contentHex = BitConverter.ToString(content).Replace("-", "");
+        await writer.WriteLineAsync($"{content.Length} {contentHex}");
+        await writer.FlushAsync();
     }
 }

@@ -1,22 +1,25 @@
-using SimpleFTP;
+namespace FTPServer;
 
-if (args.Length is 0 or > 2)
-{
-    Console.WriteLine("Port expected as first arg, working dir as second (optional)");
-    return;
-}
+using System.Net.Sockets;
 
-if (args.Length == 2)
+class Program
 {
-    Environment.CurrentDirectory = args[0];
-}
+    static async Task Main(string[] args)
+    {
+        if (args.Length != 1 || !int.TryParse(args[0], out int port) || port < 0 || port > 65535)
+        {
+            Console.WriteLine("Incorrect port value.");
+            return;
+        }
 
-var server = new Server(int.Parse(args[0]));
-try
-{
-    await server.StartAsync();
-}
-catch (Exception e) when (e is IOException)
-{
-    Console.WriteLine("Client connection error.");
+        var server = new Server(port);
+        try
+        {
+            await server.StartAsync();
+        }
+        catch (Exception e) when (e is SocketException || e is IOException)
+        {
+            Console.WriteLine("Client connection error.");
+        }
+    }
 }
