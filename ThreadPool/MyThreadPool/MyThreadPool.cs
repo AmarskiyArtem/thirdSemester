@@ -99,6 +99,7 @@ public class MyThreadPool
         private readonly object taskLockObject;
         private readonly ManualResetEvent resultIsCompletedEvent;
         private ConcurrentQueue<Action> continuationTasks;
+        private readonly Mutex _taskMutex = new(false);
 
         /// <summary>
         /// Default constructor.
@@ -115,5 +116,74 @@ public class MyThreadPool
             continuationTasks = new ConcurrentQueue<Action>();
         }
 
-        
+        /// <inheritdoc/>
+        public bool IsCompleted => isCompleted;
+
+        /// <inheritdoc/>
+        public TResult? Result
+        {
+            get
+            {
+                if (!isCompleted)
+                {
+                    resultIsCompletedEvent.WaitOne();
+                }
+
+                if (taskFuncException != null)
+                {
+                    throw new AggregateException(taskFuncException);
+                }
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Computes the result of the task's function.
+        /// </summary>
+        public void ComputeResult()
+        {
+            _taskMutex.WaitOne();
+            
+            try
+            {
+                result = taskFunction();
+            }
+            catch (Exception e)
+            {
+                taskFuncException = e;
+            }
+            finally
+            {
+                isCompleted = true;
+                resultIsCompletedEvent.Set();
+
+                foreach (var task in continuationTasks)
+                {
+                    threadPool.tasks.Add(task);
+                }
+                _taskMutex.ReleaseMutex();
+            }
+        }
+
+        /// <inheritdoc/>
+        public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult?, TNewResult> function)
+        {
+            if (threadPool.cancellationTokenSource.IsCancellationRequested)
+            {
+                throw new InvalidOperationException();
+            }
+            _taskMutex.WaitOne();
+            if (isCompleted)
+            {
+                _taskMutex.ReleaseMutex();
+                return threadPool.Submit(() => function(Result));
+            }
+            var continuation = new MyTask<TNewResult>(() => function(Result), threadPool);
+            continuationTasks.Enqueue(continuation.ComputeResult);
+                
+            
+            return continuation;
+        }
+    }
 }
