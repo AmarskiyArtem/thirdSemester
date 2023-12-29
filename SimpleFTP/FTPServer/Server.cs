@@ -3,74 +3,53 @@
 using System.Net;
 using System.Net.Sockets;
 
-/// <summary>
-/// Represents a FTP server that can handle requests from FTP clients.
-/// </summary>
 public class Server
 {
-    private readonly TcpListener _listener;
-    private readonly int _port;
+    private readonly TcpListener _server;
     private readonly CancellationTokenSource _cts = new();
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Server"/> class.
-    /// </summary>
-    /// <param name="port">The port to listen on.</param>
+    
     public Server(int port)
     {
-        if (port < 0 || port > 65535)
-        {
-            throw new ArgumentException("Incorrect port value.");
-        }
-
-        _port = port;
-        _listener = new TcpListener(IPAddress.Any, _port);
+        _server = new TcpListener(IPAddress.Any, port);
     }
-
-    /// <summary>
-    /// Starts the FTP server.
-    /// </summary>
+    
     public async Task StartAsync()
     {
-        _listener.Start();
+        _server.Start();
 
         while (!_cts.Token.IsCancellationRequested)
         {
-            var client = await _listener.AcceptTcpClientAsync();
-            Task.Run(async () =>
+            var client = await _server.AcceptTcpClientAsync();
+            await Task.Run(async () =>
             {
                 await using var stream = client.GetStream();
                 using var reader = new StreamReader(stream);
-                using var writer = new StreamWriter(stream);
+                await using var writer = new StreamWriter(stream);
 
-                string? request;
-                while ((request = await reader.ReadLineAsync()) != null)
+                while (await reader.ReadLineAsync() is { } request)
                 {
                     if (request.StartsWith("1 "))
                     {
-                        await HandleListAsync(request[2..], writer);
+                        await ListAsync(request[2..], writer);
                     }
 
                     if (request.StartsWith("2 "))
                     {
-                        await HandleGetAsync(request[2..], writer);
+                        await GetAsync(request[2..], writer);
                     }
                 }
                 client.Close();
             });
         }
     }
-
-    /// <summary>
-    /// Stop the FTP server.
-    /// </summary> <summary>
+    
     public void Stop()
     {
         _cts.Cancel();
-        _listener.Stop();
+        _server.Stop();
     }
 
-    private static async Task HandleListAsync(string path, StreamWriter writer)
+    private static async Task ListAsync(string path, TextWriter writer)
     {
         if (!Directory.Exists(path))
         {
@@ -92,7 +71,7 @@ public class Server
         await writer.FlushAsync();
     }
 
-    private static async Task HandleGetAsync(string path, StreamWriter writer)
+    private static async Task GetAsync(string path, TextWriter writer)
     {
         if (!File.Exists(path))
         {
@@ -102,7 +81,7 @@ public class Server
         }
 
         var content = await File.ReadAllBytesAsync(path);
-        string contentHex = BitConverter.ToString(content).Replace("-", "");
+        var contentHex = BitConverter.ToString(content).Replace("-", "");
         await writer.WriteLineAsync($"{content.Length} {contentHex}");
         await writer.FlushAsync();
     }
