@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyThreadPool", "MyThreadPool\MyThreadPool.csproj", "{63620D89-EA91-429A-B0AC-5FFFFB31581C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyThreadPool.Tests", "MyThreadPool.Tests\MyThreadPool.Tests.csproj", "{3D02AA85-3886-4438-8FE4-DA1BC7D07B97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{63620D89-EA91-429A-B0AC-5FFFFB31581C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63620D89-EA91-429A-B0AC-5FFFFB31581C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63620D89-EA91-429A-B0AC-5FFFFB31581C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D02AA85-3886-4438-8FE4-DA1BC7D07B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D02AA85-3886-4438-8FE4-DA1BC7D07B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D02AA85-3886-4438-8FE4-DA1BC7D07B97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D02AA85-3886-4438-8FE4-DA1BC7D07B97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
