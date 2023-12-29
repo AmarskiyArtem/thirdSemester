@@ -26,11 +26,11 @@ public class Server
     public async Task StartAsync()
     {
         _server.Start();
-
+        var tasks = new List<Task>();
         while (!_cts.Token.IsCancellationRequested)
         {
-            var client = await _server.AcceptTcpClientAsync();
-            await Task.Run(async () =>
+            var client = await _server.AcceptTcpClientAsync(_cts.Token);
+            tasks.Add(Task.Run(async () =>
             {
                 await using var stream = client.GetStream();
                 using var reader = new StreamReader(stream);
@@ -48,9 +48,12 @@ public class Server
                         await GetAsync(request[2..], writer);
                     }
                 }
+
                 client.Close();
-            });
+            }));
         }
+        
+        Task.WaitAll(tasks.ToArray());
     }
     
     /// <summary>
