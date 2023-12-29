@@ -2,61 +2,52 @@ namespace ThreadPool;
 
 using System.Collections.Concurrent;
 
-
 /// <summary>
-/// Class that represents Thread Pool instances.
+/// Class that represents Thread Pool.
 /// </summary>
 public class MyThreadPool
 {
-    private readonly Thread[] threads;
-    private CancellationTokenSource cancellationTokenSource;
-    private BlockingCollection<Action> tasks;
-    private object lockObject;
-    private readonly Mutex _mutex = new(false);
-
+    private readonly Thread[] _threads;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly BlockingCollection<Action> _tasks = new();
+    private readonly Mutex _mutex = new();
+    
     /// <summary>
-    /// Default constructor.
+    /// Thread Pool constructor
     /// </summary>
-    /// <param name="threadAmount">Amount of threads that will be made in thread pool.</param>
-    public MyThreadPool(int threadAmount)
+    /// <param name="threadCount">Number of thread</param>
+    public MyThreadPool(int threadCount)
     {
-        if (threadAmount < 1)
+        if (threadCount < 2)
         {
-            throw new ArgumentException("Amount of threads can't be negative!");
+            throw new ArgumentException("Minimum number of threads: 2");
         }
 
-        threads = new Thread[threadAmount];
-        cancellationTokenSource = new CancellationTokenSource();
-        tasks = new BlockingCollection<Action>();
-        lockObject = new();
-
+        _threads = new Thread[threadCount];
         InitThreads();
     }
 
     private void InitThreads()
     {
-        for (var i = 0; i < threads.Length; i++)
+        for (var i = 0; i < _threads.Length; i++)
         {
-            threads[i] = new(() =>
+            _threads[i] = new(() =>
             {
-                foreach (var task in tasks.GetConsumingEnumerable())
+                foreach (var task in _tasks.GetConsumingEnumerable())
                 {
                     task();
                 }
             });
-            threads[i].Start();
+            _threads[i].Start();
         }
     }
-
+    
     /// <summary>
-    /// Adds a new task to the pool.
+    /// Adds task to pool.
     /// </summary>
-    /// <param name="function">Task's function.</param>
-    /// <typeparam name="TResult">Function's return type.</typeparam>
-    /// <returns>Made task.</returns>
     public IMyTask<TResult> Submit<TResult>(Func<TResult> function)
     {
-        if (cancellationTokenSource.IsCancellationRequested)
+        if (_cts.IsCancellationRequested)
         {
             throw new InvalidOperationException("Thread pool is already shut downed!");
         }
@@ -64,13 +55,13 @@ public class MyThreadPool
         _mutex.WaitOne();
         
         var task = new MyTask<TResult>(function, this);
-        tasks.Add(task.ComputeResult);
-        
+        _tasks.Add(task.ComputeResult);
+
         _mutex.ReleaseMutex();
         
         return task;
     }
-
+    
     /// <summary>
     /// Shuts down the thread pool.
     /// </summary>
@@ -78,12 +69,12 @@ public class MyThreadPool
     {
         _mutex.WaitOne();
         
-        cancellationTokenSource.Cancel();
-        tasks.CompleteAdding();
+        _cts.Cancel();
+        _tasks.CompleteAdding();
         
         _mutex.ReleaseMutex();
         
-        foreach (var thread in threads)
+        foreach (var thread in _threads)
         {
             thread.Join();
         }
@@ -91,99 +82,87 @@ public class MyThreadPool
 
     private class MyTask<TResult> : IMyTask<TResult>
     {
-        private volatile bool isCompleted;
-        private TResult? result;
-        private readonly Func<TResult> taskFunction;
-        private Exception? taskFuncException;
-        private readonly MyThreadPool threadPool;
-        private readonly object taskLockObject;
-        private readonly ManualResetEvent resultIsCompletedEvent;
-        private ConcurrentQueue<Action> continuationTasks;
-        private readonly Mutex _taskMutex = new(false);
-
-        /// <summary>
-        /// Default constructor.
-        /// </summary>
-        /// <param name="taskFunction">Task's function.</param>
-        /// <param name="threadPool">Thread pool where task was added.</param>
+        private volatile bool _isCompleted;
+        private TResult? _result;
+        private readonly Func<TResult> _taskFunction;
+        private Exception? _taskFuncException;
+        private readonly MyThreadPool _threadPool;
+        private readonly object _taskLockObject = new();
+        private readonly ManualResetEvent _resultIsCompletedEvent = new(false);
+        private readonly ConcurrentQueue<Action> _continuationTasks = new();
+        
         public MyTask(Func<TResult> taskFunction, MyThreadPool threadPool)
         {
-            this.taskFunction = taskFunction;
-            this.threadPool = threadPool;
-            isCompleted = false;
-            taskLockObject = new object();
-            resultIsCompletedEvent = new ManualResetEvent(false);
-            continuationTasks = new ConcurrentQueue<Action>();
+            this._taskFunction = taskFunction;
+            this._threadPool = threadPool;
+            _isCompleted = false;
         }
 
         /// <inheritdoc/>
-        public bool IsCompleted => isCompleted;
+        public bool IsCompleted => _isCompleted;
 
         /// <inheritdoc/>
         public TResult? Result
         {
             get
             {
-                if (!isCompleted)
+                if (!_isCompleted)
                 {
-                    resultIsCompletedEvent.WaitOne();
+                    _resultIsCompletedEvent.WaitOne();
                 }
 
-                if (taskFuncException != null)
+                if (_taskFuncException != null)
                 {
-                    throw new AggregateException(taskFuncException);
+                    throw new AggregateException(_taskFuncException);
                 }
 
-                return result;
+                return _result;
             }
         }
-
-        /// <summary>
-        /// Computes the result of the task's function.
-        /// </summary>
+        
         public void ComputeResult()
         {
-            _taskMutex.WaitOne();
-            
-            try
+            lock (_taskLockObject)
             {
-                result = taskFunction();
-            }
-            catch (Exception e)
-            {
-                taskFuncException = e;
-            }
-            finally
-            {
-                isCompleted = true;
-                resultIsCompletedEvent.Set();
-
-                foreach (var task in continuationTasks)
+                try
                 {
-                    threadPool.tasks.Add(task);
+                    _result = _taskFunction();
                 }
-                _taskMutex.ReleaseMutex();
+                catch (Exception e)
+                {
+                    _taskFuncException = e;
+                }
+                finally
+                {
+                    _isCompleted = true;
+                    _resultIsCompletedEvent.Set();
+
+                    foreach (var task in _continuationTasks)
+                    {
+                        _threadPool._tasks.Add(task);
+                    }
+                }
             }
         }
 
         /// <inheritdoc/>
         public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult?, TNewResult> function)
         {
-            if (threadPool.cancellationTokenSource.IsCancellationRequested)
+            if (_threadPool._cts.IsCancellationRequested)
             {
                 throw new InvalidOperationException();
             }
-            _taskMutex.WaitOne();
-            if (isCompleted)
+
+            lock (_taskLockObject)
             {
-                _taskMutex.ReleaseMutex();
-                return threadPool.Submit(() => function(Result));
+                if (_isCompleted)
+                {
+                    return _threadPool.Submit(() => function(Result));
+                }
+                var continuation = new MyTask<TNewResult>(() => function(Result), _threadPool);
+                _continuationTasks.Enqueue(continuation.ComputeResult);
+                return continuation;
             }
-            var continuation = new MyTask<TNewResult>(() => function(Result), threadPool);
-            continuationTasks.Enqueue(continuation.ComputeResult);
-                
-            
-            return continuation;
         }
     }
 }
