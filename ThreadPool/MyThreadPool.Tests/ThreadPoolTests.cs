@@ -2,52 +2,52 @@ namespace ThreadPool.Tests;
 
 public class MyThreadPoolTests
 {
-    private MyThreadPool myThreadPool = null!;
+    private MyThreadPool _threadPool = new(Environment.ProcessorCount);
 
     [SetUp]
     public void Setup()
     {
-        myThreadPool = new(Environment.ProcessorCount);
+        _threadPool = new(Environment.ProcessorCount);
     }
 
     [Test]
-    public void ResultAfterSumbit_ShouldGiveExpectedValue()
+    public void ResultAfterSubmitShouldExpectedValue()
     {
-        var task = myThreadPool.Submit(() => (1 + 1) * 2);
-        Assert.That(task.Result, Is.EqualTo(4));
+        var task = _threadPool.Submit(() => (2 + 2) * 3);
+        Assert.That(task.Result, Is.EqualTo(12));
     }
 
     [Test]
-    public void ResultAfterShutdown_ShouldGiveExpectedValue()
+    public void ResultAfterShutdownShouldExpectedValue()
     {
-        var task = myThreadPool.Submit(() => (1 + 1) * 2);
-        myThreadPool.Shutdown();
-        Assert.That(task.Result, Is.EqualTo(4));
+        var task = _threadPool.Submit(() => (2 + 2) * 3);
+        _threadPool.Shutdown();
+        Assert.That(task.Result, Is.EqualTo(12));
     }
 
     [Test]
-    public void ContinueWith_ShouldGiveExpectedValue()
+    public void ContinueWithShouldExpectedValue()
     {
-        for (int i = 0; i < 10; ++i)
+        for (var i = 0; i < 10; ++i)
         {
-            var localI = i;
-            var task = myThreadPool.Submit(() => localI).ContinueWith(x => x + 1);
-            Assert.That(task.Result, Is.EqualTo(localI + 1));
+            var iCopy = i;
+            var task = _threadPool.Submit(() => iCopy).ContinueWith(x => x + 1);
+            Assert.That(task.Result, Is.EqualTo(iCopy + 1));
         }
     }
 
     [Test]
-    public void SubmitAfterShutDown_ShouldThrowException()
+    public void SubmitAfterShutDownShouldThrowsException()
     {
-        myThreadPool.Shutdown();
-        Assert.Throws<InvalidOperationException>(() => myThreadPool.Submit(() => 1));
+        _threadPool.Shutdown();
+        Assert.Throws<InvalidOperationException>(() => _threadPool.Submit(() => 1));
     }
 
     [Test]
-    public void ContinueWithAfterShutDown_ShouldThrowException()
+    public void ContinueWithAfterShutDownShouldThrowsException()
     {
-        var task = myThreadPool.Submit(() => 1);
-        myThreadPool.Shutdown();
+        var task = _threadPool.Submit(() => 1);
+        _threadPool.Shutdown();
         Assert.Throws<InvalidOperationException>(() => task.ContinueWith(x => x + 1));
     }
 }

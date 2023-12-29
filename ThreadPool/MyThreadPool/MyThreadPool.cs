@@ -93,8 +93,8 @@ public class MyThreadPool
         
         public MyTask(Func<TResult> taskFunction, MyThreadPool threadPool)
         {
-            this._taskFunction = taskFunction;
-            this._threadPool = threadPool;
+            _taskFunction = taskFunction;
+            _threadPool = threadPool;
             _isCompleted = false;
         }
 

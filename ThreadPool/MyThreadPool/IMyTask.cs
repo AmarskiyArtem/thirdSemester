@@ -1,10 +1,22 @@
 ﻿namespace ThreadPool;
 
+/// <summary>
+/// Interface of an asynchronous task with a result of type TResult.
+/// </summary>
 public interface IMyTask<out TResult>
 {
-    public bool IsCompleted { get;}
+    /// <summary>
+    /// Indicates whether it has been completed.
+    /// </summary>
+    public bool IsCompleted { get; }
 
-    public TResult? Result { get;}
+    /// <summary>
+    /// Contains the result of calculations.
+    /// </summary>
+    public TResult? Result { get; }
 
-    public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult, TNewResult> func);
+    /// <summary>
+    /// Creates a task which will be executed after current.
+    /// </summary>
+    public IMyTask<TNewResult> ContinueWith<TNewResult>(Func<TResult?, TNewResult> func);
 }
