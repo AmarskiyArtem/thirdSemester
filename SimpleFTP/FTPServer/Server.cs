@@ -3,16 +3,26 @@
 using System.Net;
 using System.Net.Sockets;
 
+/// <summary>
+/// Represents a simple FTP server.
+/// </summary>
 public class Server
 {
     private readonly TcpListener _server;
     private readonly CancellationTokenSource _cts = new();
     
+    /// <summary>
+    /// Initializes a new instance of the Server class.
+    /// </summary>
+    /// <param name="port">The port number to listen on.</param>
     public Server(int port)
     {
         _server = new TcpListener(IPAddress.Any, port);
     }
     
+    /// <summary>
+    /// Starts the server to accept incoming connections and process requests.
+    /// </summary>
     public async Task StartAsync()
     {
         _server.Start();
@@ -43,6 +53,9 @@ public class Server
         }
     }
     
+    /// <summary>
+    /// Stops the server.
+    /// </summary>
     public void Stop()
     {
         _cts.Cancel();

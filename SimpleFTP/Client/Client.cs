@@ -2,15 +2,25 @@ namespace FTPClient;
 
 using System.Net.Sockets;
 
+/// <summary>
+/// Represents a simple FTP client.
+/// </summary>
 public class Client
 {
     private readonly int _port;
     
+    /// <summary>
+    /// Initializes a new instance of the Client class with a specified port.
+    /// </summary>
+    /// <param name="port">The port number to connect to the server.</param>
     public Client(int port)
     {
         _port = port;
     }
     
+    /// <summary>
+    /// Starts the client to interact with the server by taking user input.
+    /// </summary>
     public async Task StartAsync()
     {
         while (true)
@@ -36,9 +46,17 @@ public class Client
         }
     }
     
+    /// <summary>
+    /// Sends a request to list files in dir on server.
+    /// </summary>
+    /// <param name="path">Path to dir on server</param>
     public async Task<string?> ListAsync(string path)
         => await SendRequestAsync($"1 {path}");
     
+    /// <summary>
+    /// Sends a request to get file bytes from server.
+    /// </summary>
+    /// <param name="path">Path to file on server</param>
     public async Task<string?> GetAsync(string path)
         => await SendRequestAsync($"2 {path}");
 
